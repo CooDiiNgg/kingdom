@@ -11,7 +11,7 @@ import (
 func TestEncrypt(t *testing.T) {
 	for _, test := range unit.CommsTestCases_Encrypt {
 		t.Run(test.Name, func(t *testing.T) {
-			result, err := encrypt(test.Input, test.Key)
+			result, err := encrypt(test.Input, test.Key, test.IV)
 			if test.Error {
 				require.Error(t, err)
 			} else {
@@ -25,7 +25,7 @@ func TestEncrypt(t *testing.T) {
 func TestDecrypt(t *testing.T) {
 	for _, test := range unit.CommsTestCases_Decrypt {
 		t.Run(test.Name, func(t *testing.T) {
-			result, err := decrypt(test.Input, test.Key)
+			result, err := decrypt(test.Input, test.Key, test.IV)
 			if test.Error {
 				require.Error(t, err)
 			} else {
