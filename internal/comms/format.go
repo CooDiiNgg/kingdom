@@ -2,6 +2,7 @@ package comms
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 func encode_internal(v any) ([]byte, error) {
@@ -14,8 +15,21 @@ func decode_internal[T any](data []byte) (T, error) {
 	return result, err
 }
 
-func Encode(v any) ([]byte, []byte, error) {
-	key, err := generateKey()
+func Encode(v any, key_arg ...[]byte) ([]byte, []byte, error) {
+	var key []byte
+	var err error
+	if len(key_arg) == 1 {
+		if len(key_arg[0]) != 32 {
+			return nil, nil, errors.New("Key must be 32 bytes")
+		}
+		key = key_arg[0]
+		err = nil
+	} else if len(key_arg) == 0 {
+		key, err = generateKey()
+	} else {
+		err = errors.New("Too many arguments")
+	}
+
 	if err != nil {
 		return nil, nil, err
 	}
@@ -31,6 +45,9 @@ func Encode(v any) ([]byte, []byte, error) {
 }
 
 func Decode[T any](data []byte, key []byte) (T, error) {
+	if len(key) != 32 {
+		return *new(T), errors.New("Key must be 32 bytes")
+	}
 	decodedData, err := decrypt(data, key)
 	if err != nil {
 		return *new(T), err
