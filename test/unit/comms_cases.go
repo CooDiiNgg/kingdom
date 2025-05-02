@@ -1,7 +1,7 @@
 package unit
 
 import (
-	"kingdom/internal/comms"
+	comms "kingdom/internal/comms/comms_types"
 )
 
 type CommsTestCase_EncodeInternal struct {
