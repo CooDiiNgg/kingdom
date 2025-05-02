@@ -1,4 +1,4 @@
-package comms
+package commstypes
 
 type Request struct {
 	AgentID  string `json:"agent_id"`
