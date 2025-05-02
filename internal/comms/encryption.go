@@ -3,9 +3,13 @@ package comms
 import (
 	"crypto/aes"
 	"crypto/rand"
+	"errors"
 )
 
 func encrypt(data []byte, key []byte) ([]byte, error) {
+	if len(key) != 32 {
+		return nil, errors.New("Key must be 32 bytes")
+	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -18,6 +22,9 @@ func encrypt(data []byte, key []byte) ([]byte, error) {
 }
 
 func decrypt(ciphertext []byte, key []byte) ([]byte, error) {
+	if len(key) != 32 {
+		return nil, errors.New("Key must be 32 bytes")
+	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
