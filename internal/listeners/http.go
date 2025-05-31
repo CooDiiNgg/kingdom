@@ -8,15 +8,17 @@ type HTTPListener struct {
 	address string
 	port    int
 	clientID string
+	agentID string
 	server *http.Server
 }
 
-func (h *HTTPListener) Start(clientID string) error {
+func (h *HTTPListener) Start(clientID string, agentID string) error {
 	h.clientID = clientID
+	h.agentID = agentID
 	mux := http.NewServeMux()
 
-	mux.HandleFunc(fmt.Sprintf("/client/%s", h.clientID), func(w http.ResponseWriter, r *http.Request) {
-		resp, err := HandleRequest(h.clientID, r.Body)
+	mux.HandleFunc(fmt.Sprintf("/client/%s/%s", h.clientID, h.agentID), func(w http.ResponseWriter, r *http.Request) {
+		resp, err := HandleRequest(h.clientID, h.agentID, r.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
