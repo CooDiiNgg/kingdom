@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 )
 
@@ -82,7 +83,7 @@ func decrypt(ciphertext []byte, key []byte, iv []byte) ([]byte, error) {
 	return plaintext, nil
 }
 
-func generateKey() ([]byte, error) {
+func GenerateKey() ([]byte, error) {
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 	if err != nil {
@@ -91,11 +92,34 @@ func generateKey() ([]byte, error) {
 	return key, nil
 }
 
-func generateIV() ([]byte, error) {
+func GenerateIV() ([]byte, error) {
 	iv := make([]byte, aes.BlockSize)
 	_, err := rand.Read(iv)
 	if err != nil {
 		return nil, err
 	}
 	return iv, nil
+}
+
+func hash(data []byte, size int) ([]byte, error) {
+	if size <= 0 {
+		return nil, errors.New("size must be greater than 0")
+	}
+	hash := sha256.Sum256(data)
+	if size > len(hash) {
+		return nil, errors.New("size exceeds hash length")
+	}
+	return hash[:size], nil
+}
+
+func GenerateTempKeyAndIV(clientID string, agentID string) ([]byte, []byte, error) {
+	key, err := hash([]byte(clientID), 32)
+	if err != nil {
+		return nil, nil, err
+	}
+	iv, err := hash([]byte(agentID), 16)
+	if err != nil {
+		return nil, nil, err
+	}
+	return key, iv, nil
 }
