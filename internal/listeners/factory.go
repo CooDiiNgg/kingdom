@@ -1,20 +1,25 @@
 package listeners
 
-var RegisteredListeners = make(map[string]map[string]Listener)
+import (
+	"fmt"
+	listenerstypes "kingdom/internal/listeners/listeners_types"
+)
 
-func RegisterListener(clientID string, agentID string, listener Listener) {
+var RegisteredListeners = make(map[string]map[string]listenerstypes.Listener)
+
+func RegisterListener(clientID string, agentID string, listener listenerstypes.Listener) error {
 	if _, exists := RegisteredListeners[clientID]; !exists {
-		RegisteredListeners[clientID] = make(map[string]Listener)
+		RegisteredListeners[clientID] = make(map[string]listenerstypes.Listener)
 	}
 
 	if _, exists := RegisteredListeners[clientID][agentID]; exists {
-		return fmt.Errorf("Listener for client ID %s and agent ID %s already exists", clientID, agentID)
+		return fmt.Errorf("Listener for client ID %w and agent ID %w already registered", clientID, agentID)
 	}
 
 	err := listener.Start(clientID, agentID)
 
 	if err != nil {
-		return fmt.Errorf("Failed to start listener for client ID %s and agent ID %s: %v", clientID, agentID, err)
+		return fmt.Errorf("Failed to start listener for client ID %w and agent ID %w: %w", clientID, agentID, err)
 	}
 
 	RegisteredListeners[clientID][agentID] = listener
@@ -40,11 +45,11 @@ func UnregisterListener(clientID string, agentID string) error {
 	return nil
 }
 
-func NewHttpListener(addr ListenerAddr) (Listener, error) {
+func NewHttpListener(addr listenerstypes.ListenerAddr) (listenerstypes.Listener, error) {
 	listener := &HTTPListener{}
 	err := listener.Configure(addr)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to configure HTTP listener: %v", err)
+		return nil, fmt.Errorf("Failed to configure HTTP listener: %w", err)
 	}
 	return listener, nil
 }

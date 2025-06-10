@@ -1,15 +1,17 @@
 package listeners
 
 import (
+	"fmt"
+	listenerstypes "kingdom/internal/listeners/listeners_types"
 	"net/http"
 )
 
 type HTTPListener struct {
-	address string
-	port    int
+	address  string
+	port     int
 	clientID string
-	agentID string
-	server *http.Server
+	agentID  string
+	server   *http.Server
 }
 
 func (h *HTTPListener) Start(clientID string, agentID string) error {
@@ -54,7 +56,7 @@ func (h *HTTPListener) Stop() error {
 	return nil
 }
 
-func (h *HTTPListener) Configure(addr ListenerAddr) error {
+func (h *HTTPListener) Configure(addr listenerstypes.ListenerAddr) error {
 	if addr.Address != "" {
 		h.address = addr.Address
 	}

