@@ -29,7 +29,7 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 			return nil, err
 		}
 
-		_, err := scheduler.ScheduleTask(clientID, agentID, req)
+		_, err = scheduler.ScheduleTask(clientID, agentID, req)
 		if err != nil {
 			return nil, err
 		}
