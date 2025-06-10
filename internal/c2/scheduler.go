@@ -80,7 +80,7 @@ func (s *Scheduler) queueTask(clientID, agentID string, task *commstypes.Task) e
 	st := s.getOrCreate(k)
 
 	if _, dup := st.InFlight[task.ID]; dup {
-		return errors.New("a task with this ID is already in‑flight")
+		return errors.New("a task with this ID is already in-flight")
 	}
 	for _, p := range st.Pending {
 		if p.ID == task.ID {
