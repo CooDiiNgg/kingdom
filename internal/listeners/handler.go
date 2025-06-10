@@ -44,7 +44,7 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 		}
 
 		sess := storage.NewSession(clientID, agentID, key, iv)
-		err := storage.SaveSession(sess)
+		err = storage.SaveSession(sess)
 		if err != nil {
 			return nil, err
 		}
