@@ -2,6 +2,7 @@ package listeners
 
 import (
 	"bytes"
+	b64 "encoding/base64"
 	"io"
 	scheduler "kingdom/internal/c2"
 	comms "kingdom/internal/comms"
@@ -29,7 +30,7 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 			return nil, err
 		}
 
-		_, err := scheduler.ScheduleTask(clientID, agentID, req)
+		_, err = scheduler.ScheduleTask(clientID, agentID, &req)
 		if err != nil {
 			return nil, err
 		}
@@ -48,12 +49,14 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 		if err != nil {
 			return nil, err
 		}
+		key_b64 := b64.StdEncoding.EncodeToString(key)
+		iv_b64 := b64.StdEncoding.EncodeToString(iv)
 		init := &commstypes.Task{
 			ID:      "session_init",
 			Command: "init",
 			Args: string(bytes.Join([][]byte{
-				[]byte(key),
-				[]byte(iv),
+				[]byte(key_b64),
+				[]byte(iv_b64),
 			}, []byte(","))),
 		}
 		resp, _, _, err := comms.Encode(init, temp_key, temp_iv)
@@ -70,7 +73,7 @@ func HandleRequest(clientID string, agentID string, body io.ReadCloser) ([]byte,
 			return nil, err
 		}
 
-		task, err := scheduler.ScheduleTask(clientID, agentID, req)
+		task, err := scheduler.ScheduleTask(clientID, agentID, &req)
 		if err != nil {
 			return nil, err
 		}
