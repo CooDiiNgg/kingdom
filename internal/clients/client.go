@@ -59,7 +59,7 @@ func (c *Client) Register() error {
 			c.ID = candidate
 			return nil
 		case http.StatusConflict:
-			continue // try a new UUID
+			continue
 		default:
 			return fmt.Errorf("register client: http %d", resp.StatusCode)
 		}

@@ -42,7 +42,8 @@ type model struct {
 	prompt      textinput.Model
 	promptLabel string
 
-	err error
+	err  error
+	info string
 }
 
 func newModel(sdk *cl.Client) model {
@@ -109,6 +110,7 @@ func (m model) updateList(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "q", "ctrl+c":
 		return m, tea.Quit
 	case "r":
+		m.info = ""
 		return m, m.fetchAgents()
 	case "t":
 		if len(m.list.Items()) == 0 {
@@ -135,36 +137,54 @@ func (m model) updatePrompt(k tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch k.String() {
 	case "enter":
 		input := strings.TrimSpace(m.prompt.Value())
-		if m.mode == modeTask {
-			if input != "" {
-				sel, _ := m.list.SelectedItem().(agentItem)
+		if input == "" {
+			m.mode = modeList
+			m.prompt.Blur()
+			return m, nil
+		}
+
+		switch m.mode {
+		case modeTask:
+			if sel, ok := m.list.SelectedItem().(agentItem); ok {
 				cmd, args := splitOnce(input)
 				task := &commstypes.Task{ID: fmt.Sprintf("%d", time.Now().UnixNano()), Command: cmd, Args: args}
 				if err := m.sdk.QueueTask(sel.ref.ClientID, sel.ref.AgentID, task); err != nil {
 					m.err = err
+					m.info = ""
+				} else {
+					m.info = fmt.Sprintf("Queued %s %s", cmd, args)
+					m.err = nil
 				}
 			}
 			m.mode = modeList
 			m.prompt.Blur()
 			return m, m.fetchAgents()
-		}
-		if m.mode == modeAgent {
+
+		case modeAgent:
 			platform := input
 			if platform == "" {
 				platform = "windows/amd64"
 			}
-			if _, err := m.sdk.CreateAgent(platform); err != nil {
+			resp, err := m.sdk.CreateAgent(platform)
+			if err != nil {
 				m.err = err
+				m.info = ""
+			} else {
+				_ = os.WriteFile(resp.FileName, []byte(resp.FileContent), 0o755)
+				m.err = nil
+				m.info = fmt.Sprintf("New agent %s created. Bootstrap script saved as %s.\nRun:\n%s", resp.AgentID, resp.FileName, strings.TrimSpace(resp.FileContent))
 			}
 			m.mode = modeList
 			m.prompt.Blur()
 			return m, m.fetchAgents()
 		}
+
 	case "esc":
 		m.mode = modeList
 		m.prompt.Blur()
 		return m, nil
 	}
+
 	var cmd tea.Cmd
 	m.prompt, cmd = m.prompt.Update(k)
 	return m, cmd
@@ -183,6 +203,9 @@ func (m model) View() string {
 	if m.err != nil {
 		b.WriteString("\n! ")
 		b.WriteString(m.err.Error())
+	} else if m.info != "" {
+		b.WriteString("\n> ")
+		b.WriteString(m.info)
 	}
 	return b.String()
 }
