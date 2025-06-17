@@ -2,6 +2,9 @@ package c2
 
 import (
 	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -105,6 +108,8 @@ func (s *Scheduler) schedule(clientID, agentID string, msg any) (*commstypes.Tas
 		st.Info = v
 	case *commstypes.TaskResult:
 		delete(st.InFlight, v.TaskID)
+		fmt.Println("Task result received:", v.TaskID, "Status:", v.Status, "Error:", v.Error, "Output:", v.Output)
+		logTaskResult(clientID, agentID, v)
 	default:
 		return nil, errors.New("unexpected message type sent to schedule")
 	}
@@ -130,4 +135,23 @@ func (s *Scheduler) prune(inactiveAfter time.Duration) {
 		}
 		s.mu.Unlock()
 	}
+}
+
+func logTaskResult(clientID, agentID string, res *commstypes.TaskResult) {
+	if res == nil {
+		return
+	}
+	path := filepath.Join(os.TempDir(), "kingdom_task_results.log")
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Printf("failed to open task results log: %v\n", err)
+		return
+	}
+	defer f.Close()
+
+	timestamp := time.Now().Format(time.RFC3339)
+	line := fmt.Sprintf("%s %s/%s task=%s status=%s error=%q output=%q\n",
+		timestamp, clientID, agentID, res.TaskID, res.Status, res.Error, res.Output)
+
+	_, _ = f.WriteString(line)
 }
