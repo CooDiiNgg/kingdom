@@ -34,13 +34,13 @@ func Encode(v any, key_and_iv ...[]byte) ([]byte, []byte, []byte, error) {
 	} else if len(key_and_iv) == 1 {
 		if len(key_and_iv[0]) == 32 {
 			key = key_and_iv[0]
-			iv, err = generateIV()
+			iv, err = GenerateIV()
 			if err != nil {
 				return nil, nil, nil, err
 			}
 		} else if len(key_and_iv[0]) == 16 {
 			iv = key_and_iv[0]
-			key, err = generateKey()
+			key, err = GenerateKey()
 			if err != nil {
 				return nil, nil, nil, err
 			}
@@ -48,11 +48,11 @@ func Encode(v any, key_and_iv ...[]byte) ([]byte, []byte, []byte, error) {
 			err = errors.New("Key must be 32 bytes or IV must be 16 bytes")
 		}
 	} else if len(key_and_iv) == 0 {
-		key, err = generateKey()
+		key, err = GenerateKey()
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		iv, err = generateIV()
+		iv, err = GenerateIV()
 		if err != nil {
 			return nil, nil, nil, err
 		}
